@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domain Access Map — Convert Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple-50: #EEEDFE;
+    --purple-200: #AFA9EC;
+    --purple-400: #7F77DD;
+    --purple-600: #534AB7;
+    --purple-800: #3C3489;
+    --teal-50: #E1F5EE;
+    --teal-400: #1D9E75;
+    --teal-800: #085041;
+    --amber-50: #FAEEDA;
+    --amber-400: #EF9F27;
+    --amber-800: #633806;
+    --gray-50: #F8F8F6;
+    --gray-100: #F0EFEB;
+    --gray-200: #DDDBD4;
+    --gray-400: #888780;
+    --gray-700: #4A4947;
+    --gray-900: #1C1C1A;
+  }
+
+  body {
+    font-family: 'Geist', sans-serif;
+    font-weight: 400;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page { max-width: 780px; margin: 0 auto; }
+
+  header { margin-bottom: 56px; }
+
+  .eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--gray-400);
+    line-height: 1.7;
+    max-width: 500px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    width: fit-content;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gray-700);
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .tag-vault { background: var(--teal-50); color: var(--teal-800); border: 1px solid #5DCAA5; }
+  .tag-ask   { background: var(--amber-50); color: var(--amber-800); border: 1px solid var(--amber-400); }
+  .tag-org   { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+
+  .steps { display: flex; flex-direction: column; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 32px;
+    position: relative;
+    padding-bottom: 48px;
+  }
+
+  .step:last-child { padding-bottom: 0; }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 199px;
+    top: 28px;
+    bottom: 0;
+    width: 1px;
+    background: var(--gray-200);
+  }
+
+  .step:last-child::before { display: none; }
+
+  .step-meta { padding-top: 2px; }
+
+  .step-num {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-400);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .step-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-900);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .step-why {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--gray-400);
+    line-height: 1.7;
+  }
+
+  .step-why em {
+    font-style: normal;
+    color: var(--gray-700);
+  }
+
+  .panel {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 9px 14px;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--gray-400);
+  }
+
+  .panel-body { padding: 12px 14px; }
+
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+
+  .domain-chip {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    text-align: center;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    color: var(--gray-400);
+    font-weight: 400;
+  }
+
+  .domain-chip.active {
+    background: var(--purple-50);
+    border-color: var(--purple-200);
+    color: var(--purple-800);
+    font-weight: 500;
+  }
+
+  .tool-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .tool-row:last-child { border-bottom: none; }
+
+  .tool-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--purple-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--purple-600);
+  }
+
+  .tool-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-900);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    line-height: 1.4;
+  }
+
+  .tool-desc {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--gray-400);
+    line-height: 1.55;
+  }
+
+  .cta-bar {
+    padding: 10px 14px;
+    background: var(--purple-50);
+    border-top: 1px solid var(--purple-200);
+  }
+
+  .cta-bar-text {
+    font-size: 12px;
+    color: var(--purple-800);
+  }
+
+  .vault-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--purple-600);
+    color: var(--purple-50);
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 9px;
+    border-radius: 4px;
+    margin-left: 2px;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gray-200);
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-400);
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">Convert Marketing — Internal tooling concept</div>
+    <h1>Domain Access Map</h1>
+    <p class="subtitle">A single entry point for new roleholders to understand what tools exist for their domain and how to get access — without tribal knowledge or manual handovers.</p>
+    <div class="legend">
+      <div class="legend-item"><span class="tag tag-vault">&#10003; In vault</span> Credentials in Bitwarden</div>
+      <div class="legend-item"><span class="tag tag-ask">&#9913; Ask role</span> API keys held by a named role</div>
+      <div class="legend-item"><span class="tag tag-org">&#9679; Org login</span> SSO or org email, no handover needed</div>
+    </div>
+  </header>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 01</div>
+        <div class="step-title">Select your domain</div>
+        <div class="step-why">
+          Domains — not roles — are the stable anchor. Roles shift person to person; domains stay consistent.<br><br>
+          <em>A new roleholder doesn't need to know who held the role before them. The domain tile is the entry point.</em>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Marketing domains</div>
+        <div class="panel-body">
+          <div class="domain-grid">
+            <div class="domain-chip">YouTube: Longform</div>
+            <div class="domain-chip">YouTube: Shorts</div>
+            <div class="domain-chip active">Reddit</div>
+            <div class="domain-chip">LinkedIn: Organic</div>
+            <div class="domain-chip">LinkedIn: Ads</div>
+            <div class="domain-chip">Substack</div>
+            <div class="domain-chip">Google: SEO</div>
+            <div class="domain-chip">Google: Ads</div>
+            <div class="domain-chip">External Ambassadors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 02</div>
+        <div class="step-title">See the tool stack for that domain</div>
+        <div class="step-why">
+          Each tool is tagged with its access type so the roleholder knows exactly what action to take.<br><br>
+          <em>Tools are multihomed across domains. This view shows only what's relevant, not the entire stack.</em>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Reddit — tool stack</div>
+        <div class="panel-body">
+          <div class="tool-row">
+            <div class="tool-icon">&#9711;</div>
+            <div>
+              <div class="tool-name">F5Bot <span class="tag tag-ask">&#9913; Ask Distribution Optimizer</span></div>
+              <div class="tool-desc">Keyword alert monitoring — emails when your terms appear on Reddit</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon">&#9650;</div>
+            <div>
+              <div class="tool-name">Reddit Pro <span class="tag tag-vault">&#10003; In vault</span></div>
+              <div class="tool-desc">Reddit's business suite for analytics and promoted posts</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon">&#9670;</div>
+            <div>
+              <div class="tool-name">Threadscout.ai <span class="tag tag-vault">&#10003; In vault</span></div>
+              <div class="tool-desc">AI-powered Reddit thread discovery and engagement scoring</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon">&#9632;</div>
+            <div>
+              <div class="tool-name">Reddit <span class="tag tag-vault">&#10003; In vault</span></div>
+              <div class="tool-desc">Convert's branded Reddit account credentials</div>
+            </div>
+          </div>
+        </div>
+        <div class="cta-bar">
+          <div class="cta-bar-text">Look for the <span class="vault-chip">Reddit vault</span> in Bitwarden</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 03</div>
+        <div class="step-title">Get access via Bitwarden</div>
+        <div class="step-why">
+          Credentials are company-owned, not individual-owned. The system tells the roleholder which vault to find — no deep integration required.<br><br>
+          <em>Role reassignment means vault access is reassigned, not rebuilt from scratch.</em>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Bitwarden Enterprise — Reddit vault</div>
+        <div class="panel-body">
+          <div class="tool-row">
+            <div class="tool-icon" style="background: var(--teal-50); color: var(--teal-400);">&#10003;</div>
+            <div>
+              <div class="tool-name">Reddit Pro</div>
+              <div class="tool-desc">Login credentials — company account</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon" style="background: var(--teal-50); color: var(--teal-400);">&#10003;</div>
+            <div>
+              <div class="tool-name">Threadscout.ai</div>
+              <div class="tool-desc">Login credentials + API key</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon" style="background: var(--teal-50); color: var(--teal-400);">&#10003;</div>
+            <div>
+              <div class="tool-name">Reddit</div>
+              <div class="tool-desc">Branded account credentials</div>
+            </div>
+          </div>
+          <div class="tool-row">
+            <div class="tool-icon" style="background: var(--amber-50); color: var(--amber-400);">&#9913;</div>
+            <div>
+              <div class="tool-name">F5Bot <span class="tag tag-ask">&#9913; Ask Distribution Optimizer</span></div>
+              <div class="tool-desc">Not in vault — contact DO directly for alert configuration</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>Convert Marketing — Internal concept</span>
+    <span>Domain Access Map v0.1</span>
+  </footer>
+
+</div>
+</body>
+</html>
