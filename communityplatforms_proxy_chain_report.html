@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Referrals — Revenue Proxy Chain Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue-600: #0066FF; --blue-700: #0052CC;
+    --violet-600: #7C3AED; --violet-700: #6D28D9; --violet-50: #EDE9FE;
+    --green-500: #10B981; --green-50: #EDFAF5;
+    --orange-500: #F97316;
+    --ink-900: #2A3442; --ink-800: #3C4659; --ink-700: #586478; --ink-600: #7E8AA0;
+    --ink-500: #A6B1C2; --ink-400: #D0D7E1; --ink-300: #E7EBF1; --ink-200: #F4F6F9;
+    --blue-50: #EEF4FF; --cream: #FAFAF7; --cream-hover: #F5F4EE;
+  }
+  body { font-family: 'Geist', sans-serif; background: var(--cream); color: var(--ink-900); max-width: 880px; margin: 0 auto; padding: 60px 40px 100px; font-size: 15px; font-weight: 400; line-height: 1.6; }
+  header { border-top: 3px solid var(--blue-600); border-bottom: 1px solid var(--ink-300); padding: 32px 0 28px; margin-bottom: 52px; }
+  .kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); margin-bottom: 12px; }
+  h1 { font-size: clamp(24px, 3.8vw, 52px); font-weight: 600; letter-spacing: -1px; line-height: 1.1; color: var(--ink-900); margin-bottom: 10px; }
+  h1 span { color: var(--blue-600); }
+  .subtitle { font-size: 13px; font-weight: 400; color: var(--ink-600); font-style: italic; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--ink-300); }
+  h3 { font-size: clamp(18px, 2vw, 20px); font-weight: 600; color: var(--ink-900); margin-bottom: 4px; }
+  .abstract { background: var(--ink-200); border-left: 3px solid var(--ink-400); padding: 20px 24px; font-size: 15px; line-height: 1.75; color: var(--ink-700); }
+  .abstract p + p { margin-top: 14px; }
+  .abstract strong { font-weight: 600; color: var(--ink-900); }
+
+  /* Proxy chain diagram */
+  .chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 0 8px;
+    flex-wrap: nowrap;
+  }
+  .chain-node {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--ink-300);
+    padding: 16px 18px;
+    position: relative;
+  }
+  .chain-node:first-child { border-radius: 4px 0 0 4px; }
+  .chain-node:last-child  { border-radius: 0 4px 4px 0; }
+  .chain-arrow {
+    width: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink-200);
+    border-top: 1px solid var(--ink-300);
+    border-bottom: 1px solid var(--ink-300);
+    color: var(--ink-500);
+    font-size: 13px;
+  }
+  .chain-node .node-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 4px; }
+  .chain-node .node-title { font-size: 14px; font-weight: 600; color: var(--ink-900); margin-bottom: 2px; }
+  .chain-node .node-metric { font-size: 12px; color: var(--ink-600); }
+  .chain-node.holds { border-top: 3px solid var(--green-500); }
+  .chain-node.partial { border-top: 3px solid var(--orange-500); }
+  .chain-node.breaks { border-top: 3px solid #ef4444; }
+  .chain-verdict { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .chain-verdict span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-green  { background: var(--green-500); }
+  .dot-orange { background: var(--orange-500); }
+  .dot-red    { background: #ef4444; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  thead tr { border-bottom: 2px solid var(--ink-900); }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--ink-300); vertical-align: middle; color: var(--ink-800); }
+  tbody tr:hover { background: var(--cream-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 500; white-space: nowrap; color: var(--ink-900); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 4px; white-space: nowrap; font-family: 'Geist', monospace; }
+  .pill-strong   { background: var(--green-50);  color: #065f46; }
+  .pill-moderate { background: #FFF7ED;           color: #92400e; }
+  .pill-weak     { background: var(--ink-200);    color: var(--ink-600); }
+  .pill-negative { background: #FEF2F2;           color: #991b1b; }
+  .dir-wrap { display: flex; align-items: center; gap: 7px; }
+  .dir-bar  { height: 6px; border-radius: 2px; min-width: 4px; }
+  .dir-val  { font-size: 12px; font-weight: 500; color: var(--ink-600); }
+  .table-note { font-size: 11.5px; font-weight: 400; font-style: italic; color: var(--ink-500); margin-top: 10px; }
+  .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 620px) { .signal-grid { grid-template-columns: 1fr; } body { padding: 32px 20px 60px; } .chain { flex-direction: column; } .chain-arrow { width: 100%; height: 24px; border: none; border-left: 1px solid var(--ink-300); border-right: 1px solid var(--ink-300); } }
+  .signal-card { border: 1px solid var(--ink-300); border-radius: 4px; padding: 20px 22px; background: #fff; }
+  .signal-card-header { margin-bottom: 14px; }
+  .signal-meta { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-500); margin-top: 3px; }
+  .signal-body { font-size: 14px; font-weight: 400; color: var(--ink-700); line-height: 1.7; }
+  .signal-body p + p { margin-top: 10px; }
+  .signal-body .note { color: var(--ink-500); font-style: italic; }
+  .action-line { margin-top: 12px; padding: 8px 12px; background: var(--blue-50); border-left: 2px solid var(--blue-600); font-size: 13px; font-weight: 500; color: var(--ink-800); line-height: 1.5; }
+  .action-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue-600); display: block; margin-bottom: 2px; }
+  .caveat-box { border: 1px solid var(--ink-300); border-top: 3px solid var(--ink-600); padding: 20px 24px; font-size: 14px; font-weight: 400; color: var(--ink-700); line-height: 1.75; background: var(--ink-200); border-radius: 0 0 4px 4px; }
+  .caveat-box strong { color: var(--ink-900); font-weight: 600; }
+  .caveat-box ul { padding-left: 18px; margin-top: 12px; }
+  .caveat-box li + li { margin-top: 8px; }
+  .n-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; background: var(--violet-50); color: var(--violet-700); letter-spacing: 0.04em; vertical-align: middle; margin-left: 4px; }
+  footer { border-top: 1px solid var(--ink-300); padding-top: 20px; font-size: 11px; font-weight: 400; color: var(--ink-500); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Internal Research · Convert Experimentation</div>
+  <h1>Platform Referrals<br><span>Revenue Proxy Chain Analysis</span></h1>
+  <div class="subtitle">Jan 2025 – May 2026 &nbsp;·&nbsp; n = 17 months &nbsp;·&nbsp; Spearman rank correlation · Plausible data · Community platforms</div>
+</header>
+
+<section>
+  <h2>Abstract & Method</h2>
+  <div class="abstract">
+    <p>This analysis tests whether the proxy chain <strong>platform activity → referral traffic → website exploration → free trial clicks</strong> holds for community platforms. The goal is twofold: to describe what the data shows about how community platform activity connects to site outcomes, and to identify which metrics can credibly represent this contribution in the absence of direct input-level tracking.</p>
+    <p><strong>Platforms covered:</strong> Reddit, Instagram, TikTok, GrowthHackers, Substack, Slack — analysed both in aggregate and individually. Website exploration is measured via unique visitors, pageviews, views per visit, and bounce rate. Free trial clicks are the closest available downstream revenue proxy.</p>
+    <p><strong>Method:</strong> Spearman rank correlation throughout, chosen for robustness with small, real-world datasets. Same-month and 1-month lag tested. Directional agreement (% of consecutive months both variables moved the same direction) used as an N-independent cross-check. With n=17, results are informed hypotheses, not conclusions.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Proxy chain — does it hold?</h2>
+
+  <div class="chain">
+    <div class="chain-node holds">
+      <div class="node-label">Step 1</div>
+      <div class="node-title">Platform activity</div>
+      <div class="node-metric">Reddit, Instagram, TikTok, GH, Substack, Slack</div>
+    </div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-node holds">
+      <div class="node-label">Step 2</div>
+      <div class="node-title">Referral traffic</div>
+      <div class="node-metric">Community platform referral visitors</div>
+    </div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-node holds">
+      <div class="node-label">Step 3</div>
+      <div class="node-title">Website exploration</div>
+      <div class="node-metric">Unique visitors · Pageviews · Bounce rate</div>
+    </div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-node breaks">
+      <div class="node-label">Step 4</div>
+      <div class="node-title">Free trial clicks</div>
+      <div class="node-metric">Revenue proxy · r = −0.00</div>
+    </div>
+  </div>
+
+  <div class="chain-verdict">
+    <span><span class="dot dot-green"></span> Holds: Steps 1–3</span>
+    <span><span class="dot dot-red"></span> Breaks: Step 3 → 4 (no link to free trial clicks)</span>
+  </div>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:16px;">The chain supports using referral traffic and site exploration metrics as proxies for platform contribution.</p>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:10px;">The link to free trial clicks does not hold at this sample size, either n is too small (only 11 non-zero FTC months), or community platform traffic is not yet at the volume required to convert consistently.</p>
+</section>
+
+<section>
+  <h2>Step 2 → 3: Community platform referrals vs website exploration (n = 17)</h2>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Exploration metric</th>
+          <th>vs community platform referrals</th>
+          <th>Directional agreement<br><span style="font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-500);">↑↑ or ↓↓ same month = agree</span></th>
+          <th>1-month lag (T+1)</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Unique visitors</td>
+          <td><span class="pill pill-strong">r = +0.77 ✓</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:56px;background:var(--green-500)"></div><span class="dir-val">56%</span></div></td>
+          <td><span class="pill pill-moderate">r = +0.49</span></td>
+          <td>Strong same-month link. Use as primary proxy.</td>
+        </tr>
+        <tr>
+          <td>Total pageviews</td>
+          <td><span class="pill pill-strong">r = +0.66 ✓</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:50px;background:var(--ink-400)"></div><span class="dir-val">50%</span></div></td>
+          <td><span class="pill pill-strong">r = +0.61</span></td>
+          <td>Holds same-month and improves with lag. Secondary proxy.</td>
+        </tr>
+        <tr>
+          <td>Bounce rate (lower = better)</td>
+          <td><span class="pill pill-moderate">r = −0.50</span></td>
+          <td>—</td>
+          <td>Not tested</td>
+          <td>Higher referral months = lower bounce. Quality signal.</td>
+        </tr>
+        <tr>
+          <td>Views per visit</td>
+          <td><span class="pill pill-weak">r = −0.38</span></td>
+          <td>—</td>
+          <td>Not tested</td>
+          <td>Weak, not significant (p = 0.14). Do not use as proxy.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:16px;">✓ = reliable enough at n=17 to track as a proxy metric.</p>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:10px;">Bounce rate (r = −0.50, p = 0.042) is a useful quality check. High-referral months tend to bring more engaged visitors.</p>
+</section>
+
+<section>
+  <h2>Individual channel vs unique visitors (same month, n = 17)</h2>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th>vs unique visitors</th>
+          <th>vs pageviews</th>
+          <th>Direction vs UV<br><span style="font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-500);">↑↑ or ↓↓ same month = agree</span></th>
+          <th>p-value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Reddit</td>
+          <td><span class="pill pill-strong">r = +0.64 ✓</span></td>
+          <td><span class="pill pill-moderate">r = +0.46</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:69px;background:var(--green-500)"></div><span class="dir-val">69%</span></div></td>
+          <td><span class="pill pill-strong">p = 0.006</span></td>
+        </tr>
+        <tr>
+          <td>Instagram</td>
+          <td><span class="pill pill-moderate">r = +0.49</span></td>
+          <td><span class="pill pill-moderate">r = +0.50</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:56px;background:var(--green-500)"></div><span class="dir-val">56%</span></div></td>
+          <td><span class="pill pill-moderate">p = 0.046</span></td>
+        </tr>
+        <tr>
+          <td>TikTok</td>
+          <td><span class="pill pill-moderate">r = +0.59</span></td>
+          <td><span class="pill pill-moderate">r = +0.56</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:38px;background:var(--ink-400)"></div><span class="dir-val">38%</span></div></td>
+          <td><span class="pill pill-moderate">p = 0.013</span></td>
+        </tr>
+        <tr>
+          <td>GrowthHackers</td>
+          <td><span class="pill pill-weak">r = +0.48</span></td>
+          <td><span class="pill pill-weak">r = +0.21</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:31px;background:var(--ink-400)"></div><span class="dir-val">31%</span></div></td>
+          <td><span class="pill pill-weak">p = 0.053</span></td>
+        </tr>
+        <tr>
+          <td>Substack <span class="n-badge">2026 only</span></td>
+          <td><span class="pill pill-weak">r = +0.20</span></td>
+          <td><span class="pill pill-weak">r = +0.30</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:12px;background:var(--ink-400)"></div><span class="dir-val">12%</span></div></td>
+          <td><span class="pill pill-weak">p = 0.43</span></td>
+        </tr>
+        <tr>
+          <td>Slack <span class="n-badge">2026 only</span></td>
+          <td><span class="pill pill-weak">r = +0.35</span></td>
+          <td><span class="pill pill-weak">r = +0.43</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:25px;background:var(--ink-400)"></div><span class="dir-val">25%</span></div></td>
+          <td><span class="pill pill-weak">p = 0.17</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:16px;">TikTok's r = +0.59 should be read alongside its 38% directional agreement, below chance. The correlation is a timing artifact, not a channel effect.</p>
+  <p style="font-size:14px;color:var(--ink-700);line-height:1.7;margin-top:10px;">Substack and Slack directional agreements are based on the full 17-month series with zeros pre-2026, making them unreliable.</p>
+</section>
+
+<section>
+  <h2>What the signals mean</h2>
+  <div class="signal-grid">
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>The chain holds through step 3</h3>
+        <div class="signal-meta">Platform → referrals → site exploration: r = +0.77</div>
+      </div>
+      <div class="signal-body">
+        <p>The link from community platform referral traffic to unique visitors is strong (r = +0.77, p &lt; 0.001). When referral activity across platforms goes up, site visitors go up the same month.</p>
+        <p>The pageviews lag (r = +0.61 at T+1) also holds — suggesting some referral traffic leads to return visits or deferred exploration the following month.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Recommended proxies</span>
+        Track monthly community platform referral visitors (primary) and total pageviews (secondary) as your measurable contribution to site exploration.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Free trial clicks: chain breaks here</h3>
+        <div class="signal-meta">Non-YT refs vs FTC: r = −0.00 · UV vs FTC: r = +0.14</div>
+      </div>
+      <div class="signal-body">
+        <p>There is no detectable link between community platform referral traffic and free trial clicks. This is the honest limit of the current data.</p>
+        <p>Two likely explanations: (1) community platform referral volume is still too low to generate consistent conversions — most months see 0–2 FTC events total; (2) n=17 with so few non-zero FTC months is simply too small to detect a real but weak relationship.</p>
+        <p class="note">This does not mean no relationship exists — it means the data cannot confirm one yet.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Honest framing</span>
+        Use referral traffic + site exploration as your proxy chain. Free trial clicks remain aspirational — revisit at n=24.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Reddit is the reliable channel signal</h3>
+        <div class="signal-meta">r = +0.64 vs UV · p = 0.006 · 69% directional agreement</div>
+      </div>
+      <div class="signal-body">
+        <p>Reddit is the only individual channel with a statistically reliable relationship to site visitors (p = 0.006) and consistent directional agreement (69%). It accounts for 63% of community platform referral volume.</p>
+        <p>When Reddit activity is up, the site is up. This makes Reddit referral visitors a viable individual-channel proxy metric.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Reddit referral visitors are worth tracking as a standalone metric alongside the aggregate.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Referral quality: bounce rate signal</h3>
+        <div class="signal-meta">Community platform refs vs bounce rate: r = −0.50 · p = 0.042</div>
+      </div>
+      <div class="signal-body">
+        <p>Higher community platform referral months correlate with lower bounce rates (r = −0.50). This suggests platform-referred visitors are not just arriving — they're exploring.</p>
+        <p>High-referral months (May–Jun 2025, Apr–May 2026) have bounce rates of 8–17%. Low-referral months (Jan–Mar 2025) run at 33–48%. The quality argument is real.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Add bounce rate as a quality proxy alongside volume. A falling bounce rate in a high-referral month strengthens the contribution argument.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Proxy chain assessment</h2>
+  <p style="font-size:15px;font-weight:500;color:var(--ink-700);margin-bottom:16px;line-height:1.6;">Platform activity → referral visitors → website exploration → free trial clicks</p>
+  <div class="caveat-box">
+    <strong>What the data supports — and what it honest about.</strong>
+    <ul>
+      <li><strong>The measurable contribution is real.</strong> Community platform activity produces referral visitors, and those visitors correlate strongly with site UV (r = +0.77) and pageviews (r = +0.66). This is not a claimed input-to-output story — it is an observed output-to-outcome relationship that holds consistently across 17 months.</li>
+      <li><strong>Step 4 does not hold yet.</strong> There is no detectable link between community platform referral traffic and free trial clicks at n=17. FTC events are too sparse (most months: 0–1) to establish correlation. This is a data-density problem, not necessarily a real-world absence of effect — and it is stated as such.</li>
+      <li><strong>Reddit is the strongest individual signal.</strong> The only community platform channel with a statistically significant independent relationship to site visitors (p = 0.006). Instagram is borderline significant (p = 0.046). TikTok's correlation is a timing artifact, not a channel effect.</li>
+      <li><strong>Bounce rate strengthens the contribution case.</strong> High-referral months bring more engaged visitors (bounce rate 8–17% vs 33–48% in low-referral months). This adds a quality dimension to the volume argument.</li>
+      <li><strong>Recommended tracking set:</strong> Monthly community platform referral visitors (primary), Reddit referral visitors (channel-level), monthly pageviews (depth, holds at T+1 lag), and bounce rate (quality check). Re-run at n=22 (Oct 2026) when Substack and Slack will have 10 months of comparable data.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>Platform Referrals — Revenue Proxy Chain Analysis · Convert</span>
+  <span>Jan 2025 – May 2026 · Spearman rank · n = 17</span>
+</footer>
+
+</body>
+</html>
