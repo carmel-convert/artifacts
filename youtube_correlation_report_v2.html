@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube × Plausible Correlation Analysis v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue-600: #0066FF; --blue-700: #0052CC;
+    --violet-600: #7C3AED; --violet-700: #6D28D9; --violet-50: #EDE9FE;
+    --green-500: #10B981; --green-50: #EDFAF5;
+    --orange-500: #F97316;
+    --ink-900: #2A3442; --ink-800: #3C4659; --ink-700: #586478; --ink-600: #7E8AA0;
+    --ink-500: #A6B1C2; --ink-400: #D0D7E1; --ink-300: #E7EBF1; --ink-200: #F4F6F9;
+    --blue-50: #EEF4FF; --cream: #FAFAF7; --cream-hover: #F5F4EE;
+  }
+  body { font-family: 'Geist', sans-serif; background: var(--cream); color: var(--ink-900); max-width: 880px; margin: 0 auto; padding: 60px 40px 100px; font-size: 15px; font-weight: 400; line-height: 1.6; }
+  header { border-top: 3px solid var(--blue-600); border-bottom: 1px solid var(--ink-300); padding: 32px 0 28px; margin-bottom: 52px; }
+  .kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); margin-bottom: 12px; }
+  h1 { font-size: clamp(24px, 3.8vw, 52px); font-weight: 600; letter-spacing: -1px; line-height: 1.1; color: var(--ink-900); margin-bottom: 10px; }
+  h1 span { color: var(--blue-600); }
+  .subtitle { font-size: 13px; color: var(--ink-600); font-style: italic; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--ink-300); }
+  h3 { font-size: clamp(18px, 2vw, 20px); font-weight: 600; color: var(--ink-900); margin-bottom: 4px; }
+  p.body { font-size: 14px; color: var(--ink-700); line-height: 1.7; margin-top: 12px; }
+  .abstract { background: var(--ink-200); border-left: 3px solid var(--ink-400); padding: 20px 24px; font-size: 15px; line-height: 1.75; color: var(--ink-700); }
+  .abstract p + p { margin-top: 14px; }
+  .abstract strong { font-weight: 600; color: var(--ink-900); }
+  .flag-box { border: 1px solid #FED7AA; border-left: 3px solid var(--orange-500); background: #FFF7ED; padding: 18px 22px; font-size: 14px; color: var(--ink-800); line-height: 1.7; border-radius: 0 4px 4px 0; }
+  .flag-box ol { padding-left: 18px; }
+  .flag-box li + li { margin-top: 8px; }
+  .flag-box strong { color: var(--ink-900); }
+  .chain { display: flex; align-items: stretch; margin: 0 0 8px; }
+  .chain-node { flex: 1; background: #fff; border: 1px solid var(--ink-300); padding: 16px 18px; }
+  .chain-node:first-child { border-radius: 4px 0 0 4px; }
+  .chain-node:last-child  { border-radius: 0 4px 4px 0; }
+  .chain-arrow { width: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--ink-200); border-top: 1px solid var(--ink-300); border-bottom: 1px solid var(--ink-300); color: var(--ink-500); font-size: 13px; }
+  .node-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 4px; }
+  .node-title { font-size: 14px; font-weight: 600; color: var(--ink-900); margin-bottom: 2px; }
+  .node-metric { font-size: 12px; color: var(--ink-600); }
+  .holds { border-top: 3px solid var(--green-500) !important; }
+  .partial { border-top: 3px solid var(--orange-500) !important; }
+  .breaks { border-top: 3px solid #ef4444 !important; }
+  .chain-verdict { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .chain-verdict span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-green { background: var(--green-500); } .dot-orange { background: var(--orange-500); } .dot-red { background: #ef4444; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  thead tr { border-bottom: 2px solid var(--ink-900); }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-600); white-space: nowrap; }
+  th small { display: block; font-size: 10px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink-500); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--ink-300); vertical-align: middle; color: var(--ink-800); }
+  tbody tr:hover { background: var(--cream-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 500; white-space: nowrap; color: var(--ink-900); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
+  .pill-strong { background: var(--green-50); color: #065f46; }
+  .pill-moderate { background: #FFF7ED; color: #92400e; }
+  .pill-weak { background: var(--ink-200); color: var(--ink-600); }
+  .pill-negative { background: #FEF2F2; color: #991b1b; }
+  .delta { font-size: 12px; white-space: nowrap; color: var(--ink-600); }
+  .delta b { font-weight: 600; }
+  .up { color: #047857; } .down { color: #b45309; } .flat { color: var(--ink-600); } .gone { color: #b91c1c; }
+  .dir-wrap { display: flex; align-items: center; gap: 7px; }
+  .dir-bar { height: 6px; border-radius: 2px; min-width: 4px; }
+  .dir-val { font-size: 12px; font-weight: 500; color: var(--ink-600); }
+  .table-note { font-size: 11.5px; font-style: italic; color: var(--ink-500); margin-top: 10px; }
+  .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .signal-card { border: 1px solid var(--ink-300); border-radius: 4px; padding: 20px 22px; background: #fff; }
+  .signal-card-header { margin-bottom: 14px; }
+  .signal-meta { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-500); margin-top: 3px; }
+  .signal-body { font-size: 14px; color: var(--ink-700); line-height: 1.7; }
+  .signal-body p + p { margin-top: 10px; }
+  .signal-body .note { color: var(--ink-500); font-style: italic; }
+  .action-line { margin-top: 12px; padding: 8px 12px; background: var(--blue-50); border-left: 2px solid var(--blue-600); font-size: 13px; font-weight: 500; color: var(--ink-800); line-height: 1.5; }
+  .action-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue-600); display: block; margin-bottom: 2px; }
+  .caveat-box { border: 1px solid var(--ink-300); border-top: 3px solid var(--ink-600); padding: 20px 24px; font-size: 14px; color: var(--ink-700); line-height: 1.75; background: var(--ink-200); border-radius: 0 0 4px 4px; }
+  .caveat-box strong { color: var(--ink-900); font-weight: 600; }
+  .caveat-box ul { padding-left: 18px; margin-top: 12px; }
+  .caveat-box li + li { margin-top: 8px; }
+  .n-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px; background: var(--violet-50); color: var(--violet-700); letter-spacing: 0.04em; vertical-align: middle; margin-left: 4px; }
+  footer { border-top: 1px solid var(--ink-300); padding-top: 20px; font-size: 11px; color: var(--ink-500); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 620px) { .signal-grid { grid-template-columns: 1fr; } body { padding: 32px 16px 60px; } .chain { flex-direction: column; } .chain-arrow { width: 100%; height: 24px; border: none; border-left: 1px solid var(--ink-300); border-right: 1px solid var(--ink-300); } }
+  .dir-val { white-space: nowrap; }
+  td:last-child { min-width: 150px; } th { white-space: normal; }
+  .pill + .delta { display: block; margin-top: 3px; }
+  .table-note { color: var(--ink-800); font-size: 12px; }
+  th small, .signal-meta, .dir-val, .delta { color: var(--ink-700); }
+  .signal-body .note { color: var(--ink-700); }
+  .node-label { color: var(--ink-600); }
+</style></head><body>
+<header>
+  <div class="kicker">Internal Research · Convert · v2 (Q3 2026 update)</div>
+  <h1>YouTube × Plausible<br><span>Correlation Analysis</span></h1>
+  <div class="subtitle">Jan 2025 – Sep 2026 &nbsp;·&nbsp; n = 21 months (v1: n = 17) &nbsp;·&nbsp; Spearman rank correlation</div>
+</header>
+
+<section>
+  <h2>Abstract &amp; Method</h2>
+  <div class="abstract">
+    <p>This analysis tests whether monthly YouTube activity metrics (watch hours, views, long-form and short-form video counts, impressions, YouTube impression CTR, likes and subscriber change) correlate with downstream outcomes tracked in Plausible: YouTube referral visitors, website exploration (bounce rate, visit duration, views per visit) and free trial clicks. The goal is to see which YouTube inputs, if any, predict site-side outcomes, and whether a 1-month lag improves those predictions.</p>
+    <p><strong>Data:</strong> YouTube Studio monthly metrics plus Plausible metrics filtered to "YouTube is source", Jan 2025 – Sep 2026 (n = 21 months; v1 used Jan 2025 – May 2026, n = 17).</p>
+    <p><strong>Method:</strong> Spearman rank correlation throughout, chosen over Pearson because it is more robust to outliers and doesn't assume normally distributed data, which suits a small, real-world dataset. Every variable is tested in the same month and with a 1-month lag (YouTube metric in month T vs outcome in month T+1). "Moves with referrals" (the share of months where both changed in the same direction) is a cross-check that doesn't depend on sample size. A year-on-year comparison uses Jan–Sep of each year.</p>
+    <p><strong>Caveats:</strong> With n = 21, even strong-looking correlations can shift with a few more months of data. Results are informed hypotheses, not conclusions. YouTube changed how it counts views in April 2025 and again in August 2026, so Views correlations need extra caution.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Data notes: read before the numbers</h2>
+  <div class="flag-box">
+    <ol>
+      <li><strong>Views now has two structural breaks:</strong> April 2025 (Shorts counting change) and August 2026 (another view-counting change). "Engaged Views" only exists from August 2026 (2 months), so it isn't tested.</li>
+            <li><strong>June 2026: product-related videos introduced.</strong> Four months isn't enough to test this. Jun–Sep 2026 averaged 76 referrals/month vs 90 over the previous 12 months.</li>
+      <li><strong>September 2026: 3 MCP vertical ads rolled out</strong>, and ads traffic was filtered out of all YouTube Studio metrics.</li>
+      <li><strong>YouTube free trial clicks:</strong> an average of 0.25/month for Jun–Sep 2026, vs an average of 5.3/month over the previous 12 months. Plausible only credits YouTube when the visitor clicks a Free Trial button in the same visit, and descriptions link to informational resources.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2>Correlation table — same month (n = 21)</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>YouTube metric</th>
+          <th>vs Referrals<small>v2 (v1)</small></th>
+          <th>vs Free trial clicks<small>v2 (v1)</small></th>
+          <th>vs Impressions<small>v2 (v1)</small></th>
+          <th>Moves with referrals<small>% of months, v1 → v2</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Impressions</td>
+          <td><span class="pill pill-strong">r = +0.58 ✓</span> <span class="delta down">(+0.71)</span></td>
+          <td><span class="pill pill-weak">r = +0.09</span> <span class="delta">(−0.03)</span></td>
+          <td>—</td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:60px;background:var(--green-500)"></div><span class="dir-val">69% → 60%</span></div></td>
+        </tr>
+        <tr>
+          <td>Watch hours</td>
+          <td><span class="pill pill-weak">r = +0.12</span> <span class="delta">(+0.13)</span></td>
+          <td><span class="pill pill-weak">r = −0.07</span> <span class="delta">(+0.23)</span></td>
+          <td><span class="pill pill-weak">r = +0.05</span> <span class="delta">(−0.02)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:55px;background:var(--ink-400)"></div><span class="dir-val">64% → 55%</span></div></td>
+        </tr>
+        <tr>
+          <td>Views ⚠⚠</td>
+          <td><span class="pill pill-weak">r = −0.09</span> <span class="delta">(+0.04)</span></td>
+          <td><span class="pill pill-weak">r = +0.04</span> <span class="delta">(+0.01)</span></td>
+          <td><span class="pill pill-weak">r = +0.24</span> <span class="delta">(+0.27)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:60px;background:var(--green-500)"></div><span class="dir-val">69% → 60%</span></div></td>
+        </tr>
+        <tr>
+          <td>Long-form count</td>
+          <td><span class="pill pill-weak">r = +0.16</span> <span class="delta">(+0.19)</span></td>
+          <td><span class="pill pill-weak">r = −0.14</span> <span class="delta">(−0.03)</span></td>
+          <td><span class="pill pill-moderate">r = +0.41</span> <span class="delta">(+0.39)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:60px;background:var(--green-500)"></div><span class="dir-val">62% → 60%</span></div></td>
+        </tr>
+        <tr>
+          <td>Short-form count</td>
+          <td><span class="pill pill-weak">r = −0.23</span> <span class="delta">(−0.13)</span></td>
+          <td><span class="pill pill-weak">r = −0.31</span> <span class="delta">(−0.16)</span></td>
+          <td><span class="pill pill-weak">r = +0.09</span> <span class="delta">(+0.20)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:40px;background:var(--ink-400)"></div><span class="dir-val">44% → 40%</span></div></td>
+        </tr>
+        <tr>
+          <td>YouTube impression CTR</td>
+          <td><span class="pill pill-weak">r = −0.04</span> <span class="delta">(−0.11)</span></td>
+          <td><span class="pill pill-weak">r = +0.10</span> <span class="delta">(+0.33)</span></td>
+          <td><span class="pill pill-negative">r = −0.50 ✓</span> <span class="delta">(−0.47)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:45px;background:var(--ink-400)"></div><span class="dir-val">44% → 45%</span></div></td>
+        </tr>
+        <tr>
+          <td>Likes</td>
+          <td><span class="pill pill-moderate">r = −0.41</span> <span class="delta">(−0.33)</span></td>
+          <td><span class="pill pill-weak">r = +0.08</span> <span class="delta">(+0.02)</span></td>
+          <td><span class="pill pill-weak">r = −0.08</span> <span class="delta">(−0.14)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:35px;background:var(--ink-400)"></div><span class="dir-val">44% → 35%</span></div></td>
+        </tr>
+        <tr>
+          <td>Subscribers (delta)</td>
+          <td><span class="pill pill-negative">r = −0.50 ✓</span> <span class="delta">(−0.54)</span></td>
+          <td><span class="pill pill-weak">r = −0.37</span> <span class="delta">(−0.39)</span></td>
+          <td><span class="pill pill-negative">r = −0.47 ✓</span> <span class="delta">(−0.48)</span></td>
+          <td><div class="dir-wrap"><div class="dir-bar" style="width:40px;background:var(--ink-400)"></div><span class="dir-val">38% → 40%</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">⚠⚠ Views: counting changed April 2025 and August 2026. &nbsp;·&nbsp; ✓ = p &lt; 0.05 at n = 21. &nbsp;·&nbsp; "Moves with referrals" = in what share of months the metric and referrals changed in the same direction from the previous month (both up or both down). 50% is a coin flip; above 60% suggests they move together.</p>
+</section>
+
+<section>
+  <h2>1-month lag — does last month's YouTube predict this month's outcomes?</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Predicts referrals (T+1)?<small>v2 (v1)</small></th>
+          <th>Predicts free trial clicks (T+1)?<small>v2 (v1)</small></th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Impressions</td>
+          <td><span class="pill pill-moderate">r = +0.41</span> <span class="delta">(+0.34)</span></td>
+          <td><span class="pill pill-weak">r = +0.36</span> <span class="delta">(+0.38)</span></td>
+          <td class="flat">● Still mainly a same-month effect (p = 0.069)</td>
+        </tr>
+        <tr>
+          <td>Subscribers (delta)</td>
+          <td><span class="pill pill-negative">r = −0.43</span> <span class="delta">(−0.64)</span></td>
+          <td><span class="pill pill-weak">r = +0.04</span> <span class="delta">(−0.11)</span></td>
+          <td class="down">▼ Weaker (p = 0.061)</td>
+        </tr>
+        <tr>
+          <td>Long-form count</td>
+          <td><span class="pill pill-weak">r = +0.14</span> <span class="delta">(+0.18)</span></td>
+          <td><span class="pill pill-weak">r = +0.15</span> <span class="delta">(+0.40)</span></td>
+          <td class="gone">✕ FTC signal dissolved</td>
+        </tr>
+        <tr>
+          <td>Watch hours</td>
+          <td><span class="pill pill-weak">r = +0.24</span> <span class="delta">(+0.30)</span></td>
+          <td><span class="pill pill-weak">r = −0.10</span> <span class="delta">(+0.25)</span></td>
+          <td class="flat">● Still weak</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">Caveat on the long-form → FTC result: the four new months have near-zero FTCs (tracking or real, unconfirmed), which may be what dragged this down. It needs re-testing once FTC tracking is confirmed.</p>
+</section>
+
+<section>
+  <h2>Step 3: YouTube visitors → website exploration (YouTube-only data, n = 21)</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Exploration metric</th>
+          <th>vs YouTube visitors<small>same month</small></th>
+          <th>1-month lag<small>T+1</small></th>
+          <th>By year<small>2025 (n = 12) · 2026 (n = 9)</small></th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bounce rate</td>
+          <td><span class="pill pill-strong">r = −0.56 ✓</span> <span class="delta">p = 0.009</span></td>
+          <td><span class="pill pill-strong">r = −0.50 ✓</span> <span class="delta">p = 0.026</span></td>
+          <td><span class="delta">−0.68 · −0.07</span></td>
+          <td>More YouTube visitors, lower bounce. Mainly a 2025 pattern: 2026 bounce stayed low throughout.</td>
+        </tr>
+        <tr>
+          <td>Visit duration</td>
+          <td><span class="pill pill-weak">r = −0.14</span> <span class="delta">p = 0.54</span></td>
+          <td><span class="pill pill-weak">r = −0.21</span> <span class="delta">p = 0.38</span></td>
+          <td><span class="delta">−0.56 · +0.57</span></td>
+          <td>No overall link. The two years point opposite ways.</td>
+        </tr>
+        <tr>
+          <td>Views per visit</td>
+          <td><span class="pill pill-weak">r = −0.17</span> <span class="delta">p = 0.46</span></td>
+          <td><span class="pill pill-weak">r = −0.22</span> <span class="delta">p = 0.34</span></td>
+          <td><span class="delta">−0.36 · +0.43</span></td>
+          <td>No link.</td>
+        </tr>
+        <tr>
+          <td>Free trial clicks</td>
+          <td><span class="pill pill-weak">r = +0.34</span> <span class="delta">p = 0.13</span></td>
+          <td><span class="pill pill-weak">r = +0.02</span> <span class="delta">p = 0.94</span></td>
+          <td><span class="delta">+0.44 · +0.49</span></td>
+          <td>Positive in both years but not significant.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">Total pageviews isn't shown: it rises almost one-for-one with visitors (r = +0.93), so it measures volume, not depth.</p>
+
+  <p class="body"><strong>Which YouTube metrics go with better site engagement?</strong></p>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>YouTube metric</th>
+          <th>vs bounce<small>lower = better</small></th>
+          <th>vs visit duration</th>
+          <th>vs views per visit</th>
+          <th>Reading</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Impressions</td>
+          <td><span class="pill pill-strong">r = −0.46 ✓</span></td>
+          <td><span class="pill pill-negative">r = −0.44 ✓</span></td>
+          <td><span class="pill pill-negative">r = −0.52 ✓</span></td>
+          <td>High-reach months: fewer bounces, but shorter, shallower visits.</td>
+        </tr>
+        <tr>
+          <td>Long-form count</td>
+          <td><span class="pill pill-weak">r = −0.33</span></td>
+          <td><span class="pill pill-weak">r = −0.34</span></td>
+          <td><span class="pill pill-weak">r = −0.21</span></td>
+          <td>Same direction as impressions, not significant.</td>
+        </tr>
+        <tr>
+          <td>Short-form count</td>
+          <td><span class="pill pill-weak">r = −0.08</span></td>
+          <td><span class="pill pill-weak">r = +0.01</span></td>
+          <td><span class="pill pill-weak">r = +0.04</span></td>
+          <td>No link.</td>
+        </tr>
+        <tr>
+          <td>YouTube impression CTR</td>
+          <td><span class="pill pill-weak">r = +0.02</span></td>
+          <td><span class="pill pill-weak">r = +0.02</span></td>
+          <td><span class="pill pill-moderate">r = +0.43</span></td>
+          <td>Months with a higher YouTube impression CTR: more pages per visit on the site (p = 0.054).</td>
+        </tr>
+        <tr>
+          <td>Subscribers (delta)</td>
+          <td><span class="pill pill-weak">r = +0.23</span></td>
+          <td><span class="pill pill-weak">r = +0.27</span></td>
+          <td><span class="pill pill-strong">r = +0.51 ✓</span></td>
+          <td>Fewer visitors in subscriber growth months, but those who come view more pages.</td>
+        </tr>
+        <tr>
+          <td>Likes</td>
+          <td><span class="pill pill-negative">r = +0.49 ✓</span></td>
+          <td><span class="pill pill-weak">r = +0.39</span></td>
+          <td><span class="pill pill-weak">r = +0.04</span></td>
+          <td>High-likes months: higher bounce.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">✓ = p &lt; 0.05. 18 tests were run in this table, so about 1 "significant" result would be expected by chance. So any single ✓ here could be chance. It's more reliable if it shows up again in the Q4 re-run.</p>
+</section>
+
+<section>
+  <h2>2025 vs 2026 — same months (Jan–Sep), YouTube only</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Metric</th><th>Jan–Sep 2025</th><th>Jan–Sep 2026</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td>YouTube visitors</td><td>558</td><td>733</td><td class="up">▲ +31%</td></tr>
+        <tr><td>Pageviews</td><td>1,419</td><td>2,165</td><td class="up">▲ +53%</td></tr>
+        <tr><td>Bounce rate (avg of months)</td><td>26%</td><td>12%</td><td class="up">▲ 14 pts better</td></tr>
+        <tr><td>Visit duration (median month)</td><td>40s</td><td>14s</td><td class="down">▼ −65%</td></tr>
+        <tr><td>Views per visit (avg of months)</td><td>3.28</td><td>2.89</td><td class="down">▼ −12%</td></tr>
+        <tr><td>Free trial clicks</td><td>26</td><td>24</td><td class="flat">● Flat (but 1 since June)</td></tr>
+        <tr><td>Impressions</td><td>198k</td><td>201k</td><td class="flat">● Flat</td></tr>
+        <tr><td>Watch hours</td><td>317</td><td>505</td><td class="up">▲ +59%</td></tr>
+        <tr><td>Long-form / Shorts published</td><td>49 / 172</td><td>57 / 124</td><td class="flat">More long-form, fewer Shorts</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="body">Same reach, more visitors, far fewer bounces, but shorter visits. YouTube visitors bounce less than community visitors (19% vs 33% on average, lower in 18 of 21 months).</p>
+</section>
+
+<section>
+  <h2>What the signals mean</h2>
+  <div class="signal-grid">
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Impressions → referrals still holds</h3>
+        <div class="signal-meta">r = +0.58 · p = 0.006 · v1 +0.71</div>
+      </div>
+      <div class="signal-body">
+        <p>Still the clearest finding in the YouTube chain. It weakened. July 2026 is the main outlier: the lowest impressions since Apr 2025 (16.6k) but the second-highest referrals on record (145).</p>
+        <p class="note">Impressions are still an algorithm output, not a direct input.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Keep impressions as the primary leading indicator. Long-form count vs impressions holds (+0.41) as the best candidate lever.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Subscriber delta → referrals (negative): holds</h3>
+        <div class="signal-meta">r = −0.50 same month · −0.43 lagged</div>
+      </div>
+      <div class="signal-body">
+        <p>Months with more subscriber growth still bring fewer referrals. The lagged version weakened (−0.64 → −0.43) and is no longer significant.</p>
+        <p>v1's explanation still fits: broad or Shorts-driven growth attracts casual followers who don't visit the site.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Keep optimising for intent traffic over subscriber count.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>Long-form → free trial clicks: dissolved, for now</h3>
+        <div class="signal-meta">T+1 r = +0.15 · v1 +0.40</div>
+      </div>
+      <div class="signal-body">
+        <p>v1 marked this as the signal most likely to "confirm or dissolve". At n = 21 it has dissolved. Long-form output stayed steady (7.5/month) while FTCs fell to about 0.</p>
+        <p class="note">If the FTC goal broke, this result isn't valid evidence either way.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Stop citing long-form → FTC as a signal. Re-test in Q4 after the site-wide FTC check.
+      </div>
+    </div>
+
+    <div class="signal-card">
+      <div class="signal-card-header">
+        <h3>YouTube impression CTR vs impressions is now significant</h3>
+        <div class="signal-meta">r = −0.50 · p = 0.021 · v1 −0.47 (p = 0.056)</div>
+      </div>
+      <div class="signal-body">
+        <p>YouTube impression CTR is the share of people who see a thumbnail on YouTube and click to watch. When impressions go up, this CTR goes down: YouTube is showing the videos to more people outside the core audience, and a smaller share of them click.</p>
+        <p>Jul–Sep 2026 is the same pattern from the other side: impressions were low (16.6k–22.2k/month) and YouTube impression CTR was high (2.4–2.9%, among the highest on record). Fewer, better-matched viewers.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Action</span>
+        Don't treat a lower YouTube impression CTR in high-impression months as a problem. Those months still send more visitors to the site (impressions → referrals r = +0.58).
+      </div>
+    </div>
+
+    <div class="signal-card" style="grid-column: 1 / -1;">
+      <div class="signal-card-header">
+        <h3>New: YouTube visitors explore, and bounce less as volume grows</h3>
+        <div class="signal-meta">Bounce r = −0.56 · p = 0.009 · lag −0.50 · 2026 bounce 12% avg</div>
+      </div>
+      <div class="signal-body">
+        <p>Months with more YouTube visitors have a lower YouTube bounce rate (r = −0.56). So step 3 of the chain (referrals → website exploration) holds for YouTube on the bounce measure.</p>
+        <p>Year on year (Jan–Sep), visitors grew 31% and bounce fell from 26% to 12%: more people are clicking past the first page. But median visit duration fell from 40s to 14s, and visit duration has no link to visitor volume. More visitors explore beyond one page, but they don't stay longer.</p>
+        <p class="note">Impressions go with lower bounce but shallower visits. Broad reach brings people who click once more, then leave.</p>
+      </div>
+      <div class="action-line">
+        <span class="action-label">Recommended proxies</span>
+        YouTube visitors (volume) + YouTube bounce rate (quality). Watch visit duration and check which pages YouTube links land on.
+      </div>
+    </div>
+
+    <div class="signal-card" style="grid-column: 1 / -1;">
+      <div class="signal-card-header">
+        <h3>Watch hours, Views, Shorts, Likes: still no positive signal</h3>
+        <div class="signal-meta">All |r| ≤ 0.23 with referrals except Likes (−0.41, not significant)</div>
+      </div>
+      <div class="signal-body">
+        <p>Watch hours held around 44–54/month from Jun to Sep 2026 without moving referrals. Views now has two counting breaks. Short-form count has drifted slightly negative against both referrals (−0.23) and FTCs (−0.31). Shorts output went up (19.5/month vs 12 previously) while referrals didn't.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Revenue proxy chain assessment</h2>
+  <p style="font-size:15px;font-weight:500;color:var(--ink-700);margin-bottom:16px;line-height:1.6;">Publishing more long-form videos → earns more impressions → drives more referrals → leads to free trial clicks</p>
+  <div class="caveat-box">
+    <strong>Does the data support the proxy chain?</strong> The middle of the chain holds, and both ends are still weak.
+    <ul>
+      <li><strong>Holds:</strong> Impressions → Referrals (r = +0.58, p = 0.006). Weaker than v1 but still significant.</li>
+      <li><strong>Still borderline:</strong> Long-form count → Impressions (+0.41, p = 0.066), essentially unchanged.</li>
+      <li><strong>Dissolved:</strong> Long-form → FTC (lagged), from +0.40 to +0.15. It may be contaminated by the FTC drop.</li>
+      <li><strong>Holds:</strong> Subscriber growth moves opposite to referrals (−0.50).</li>
+      <li><strong>New, step 3 holds for YouTube:</strong> more YouTube visitors → lower bounce (−0.56, p = 0.009, YouTube-only data). Duration and views per visit: no link.</li>
+      <li><strong>Step 4:</strong> YouTube visitors vs free trial clicks +0.34, not significant.</li>
+      <li><strong>Q4 re-run (n = 24, Jan 2027):</strong> Run the site-wide FTC check first. If a direct trial CTA is added to descriptions, note the start month as a break. Do a first read of product-related videos with 7 months of data. Engaged Views will have 5 months, still too few to test.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>YouTube × Plausible Correlation Analysis · v2 · Convert</span>
+  <span>Jan 2025 – Sep 2026 · Spearman rank · n = 21</span>
+</footer>
+
+</body></html>
