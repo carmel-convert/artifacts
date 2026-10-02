@@ -90,10 +90,20 @@
   .node-label { color: var(--ink-600); }
 </style></head><body>
 <header>
-  <div class="kicker">Internal Research · Convert Experimentation · v2 (Q3 2026 update)</div>
+  <div class="kicker">Internal Research · Convert · v2 (Q3 2026 update)</div>
   <h1>YouTube × Plausible<br><span>Correlation Analysis</span></h1>
   <div class="subtitle">Jan 2025 – Sep 2026 &nbsp;·&nbsp; n = 21 months (v1: n = 17) &nbsp;·&nbsp; Spearman rank correlation</div>
 </header>
+
+<section>
+  <h2>Abstract &amp; Method</h2>
+  <div class="abstract">
+    <p>This analysis tests whether monthly YouTube activity metrics (watch hours, views, long-form and short-form video counts, impressions, YouTube impression CTR, likes and subscriber change) correlate with downstream outcomes tracked in Plausible: YouTube referral visitors, website exploration (bounce rate, visit duration, views per visit) and free trial clicks. The goal is to see which YouTube inputs, if any, predict site-side outcomes, and whether a 1-month lag improves those predictions.</p>
+    <p><strong>Data:</strong> YouTube Studio monthly metrics plus Plausible metrics filtered to "YouTube is source", Jan 2025 – Sep 2026 (n = 21 months; v1 used Jan 2025 – May 2026, n = 17).</p>
+    <p><strong>Method:</strong> Spearman rank correlation throughout, chosen over Pearson because it is more robust to outliers and doesn't assume normally distributed data, which suits a small, real-world dataset. Every variable is tested in the same month and with a 1-month lag (YouTube metric in month T vs outcome in month T+1). "Moves with referrals" (the share of months where both changed in the same direction) is a cross-check that doesn't depend on sample size. A year-on-year comparison uses Jan–Sep of each year.</p>
+    <p><strong>Caveats:</strong> With n = 21, even strong-looking correlations can shift with a few more months of data. Results are informed hypotheses, not conclusions. YouTube changed how it counts views in April 2025 and again in August 2026, so Views correlations need extra caution.</p>
+  </div>
+</section>
 
 <section>
   <h2>Data notes: read before the numbers</h2>
